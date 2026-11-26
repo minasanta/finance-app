@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, View, Alert } from 'react-native';
-import { useStore, uid, num, fmt, curMonth, Installment } from '../../src/store';
-import { Screen, Card, Input, Button, Line, colors } from '../../src/ui';
+import { useStore, uid, num, fmt, curMonth, Installment } from '../store';
+import { Screen, Card, Input, Button, Line, colors } from '../ui';
 
 function endDate(i: Installment) {
   const left = i.total - i.paid;

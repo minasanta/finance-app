@@ -2,19 +2,29 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type CloudKind = 'instant' | 'monthly' | 'gold' | 'stocks';
-export type Cloud = { id: string; name: string; kind: CloudKind; balance: number };
+// balance is the amount at baseDate; rate is the annual yield in % (grows daily from baseDate)
+export type Cloud = { id: string; name: string; kind: CloudKind; balance: number; baseDate?: string; rate?: number };
 export type Expense = { id: string; date: string; category: string; note: string; amount: number };
 export type Installment = {
   id: string; name: string; amount: number; total: number; paid: number;
   dayOfMonth: number; lastPaid?: string;
 };
+export type HoldingKind = 'stock' | 'gold' | 'silver';
+export type Trade = { id: string; date: string; qty: number; price: number; fee: number };
+export type Dividend = { id: string; date: string; amount: number };
+export type Holding = {
+  id: string; kind: HoldingKind; name: string;
+  currentPrice: number; priceUpdated?: string;
+  buys: Trade[]; sells: Trade[]; dividends: Dividend[];
+  reason: string; target: number; stop: number;
+};
 export type State = {
   income: number; allowance: number;
-  clouds: Cloud[]; expenses: Expense[]; installments: Installment[];
+  clouds: Cloud[]; expenses: Expense[]; installments: Installment[]; holdings: Holding[];
 };
 
 const KEY = 'finance-state-v1';
-const empty: State = { income: 0, allowance: 0, clouds: [], expenses: [], installments: [] };
+const empty: State = { income: 0, allowance: 0, clouds: [], expenses: [], installments: [], holdings: [] };
 
 type Ctx = { state: State; setState: (fn: (s: State) => State) => void };
 const StoreCtx = createContext<Ctx>({ state: empty, setState: () => {} });
@@ -25,7 +35,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     AsyncStorage.getItem(KEY)
-      .then((v) => { if (v) setS({ ...empty, ...JSON.parse(v) }); })
+      .then((v) => {
+        if (!v) return;
+        const d = JSON.parse(v) || {};
+        setS({
+          income: d.income || 0,
+          allowance: d.allowance || 0,
+          clouds: d.clouds || [],
+          expenses: d.expenses || [],
+          installments: d.installments || [],
+          holdings: d.holdings || [],
+        });
+      })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Text } from 'react-native';
-import { useStore, num, fmt, curMonth } from '../../src/store';
-import { Screen, Card, Input, Button, Line, colors } from '../../src/ui';
+import { Text, Alert } from 'react-native';
+import { useStore, num, fmt, curMonth } from '../store';
+import { Screen, Card, Input, Button, Line, colors } from '../ui';
+import { summarize, cloudNow } from '../calc';
+import { sampleState } from '../sample';
 
 export default function Home() {
   const { state, setState } = useStore();
@@ -18,7 +20,8 @@ export default function Home() {
   const instMonthly = state.installments.filter((i) => i.paid < i.total).reduce((a, i) => a + i.amount, 0);
   const allowanceLeft = state.allowance - spent;
   const toSave = state.income - state.allowance - instMonthly;
-  const totalSavings = state.clouds.reduce((a, c) => a + c.balance, 0);
+  const totalSavings = state.clouds.reduce((a, c) => a + cloudNow(c), 0);
+  const portfolio = state.holdings.reduce((a, h) => a + summarize(h).value, 0);
   const debtLeft = state.installments.reduce((a, i) => a + Math.max(i.total - i.paid, 0) * i.amount, 0);
 
   return (
@@ -40,9 +43,26 @@ export default function Home() {
       </Card>
 
       <Card title="Wealth">
-        <Line label="Total savings and investments" value={fmt(totalSavings)} bold />
+        <Line label="Savings (Clouds)" value={fmt(totalSavings)} />
+        <Line label="Investments (stocks, gold, silver)" value={fmt(portfolio)} />
         <Line label="Remaining installments (total)" value={fmt(debtLeft)} />
-        <Line label="Net" value={fmt(totalSavings - debtLeft)} bold />
+        <Line label="Net" value={fmt(totalSavings + portfolio - debtLeft)} bold />
+      </Card>
+
+      <Card title="Try the app">
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          Fill the app with example income, expenses, savings, installments, stocks, gold and silver so you can see how everything works.
+        </Text>
+        <Button title="Load sample data" onPress={() =>
+          Alert.alert('Load sample data', 'This replaces everything currently in the app.', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Load', onPress: () => setState(() => sampleState()) },
+          ])} />
+        <Button title="Clear all data" color={colors.danger} onPress={() =>
+          Alert.alert('Clear all data', 'This deletes everything in the app.', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Clear', style: 'destructive', onPress: () => setState(() => ({ income: 0, allowance: 0, clouds: [], expenses: [], installments: [], holdings: [] })) },
+          ])} />
       </Card>
     </Screen>
   );

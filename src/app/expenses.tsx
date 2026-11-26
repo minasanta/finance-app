@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, View, Pressable } from 'react-native';
-import { useStore, uid, num, fmt, curMonth } from '../../src/store';
-import { Screen, Card, Input, Button, Chips, Line, colors } from '../../src/ui';
+import { useStore, uid, num, fmt, curMonth } from '../store';
+import { Screen, Card, Input, Button, Chips, Line, colors } from '../ui';
 
 const CATS = ['Food - Work', 'Food - Home', 'Transport - Work', 'Transport - Personal',
   'Clothes', 'Home items', 'Going out', 'Other'].map((c) => ({ value: c, label: c }));
